@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bloc - Translator</title>
+    <meta name="description" content="The Bloc - Proprietary encryption system with retro 80s Minitel aesthetic">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: black;
+            color: #00ff00;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            border: 4px solid #00ff00;
+            padding: 30px;
+            background: rgba(0, 20, 0, 0.8);
+            box-shadow: 
+                0 0 20px rgba(0, 255, 0, 0.3),
+                inset 0 0 20px rgba(0, 255, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            letter-spacing: 0.3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-bottom: 30px;
+            letter-spacing: 0.1em;
+        }
+
+        .header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            display: block;
+            margin: 0 auto 30px;
+            padding: 12px 24px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .mode-btn:hover {
+            background: #00ff00;
+            color: black;
+            text-shadow: none;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.1em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: black;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            resize: none;
+            text-shadow: 0 0 3px rgba(0, 255, 0, 0.5);
+            caret-color: #00ff00;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00ff40;
+        }
+
+        textarea::placeholder {
+            color: rgba(0, 255, 0, 0.3);
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+            letter-spacing: 0.1em;
+        }
+
+        button:hover:not(:disabled) {
+            background: #00ff00;
+            color: black;
+            text-shadow: none;
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .translate-btn {
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+            font-size: 1.125rem;
+        }
+
+        .copy-btn {
+            margin-left: auto;
+            display: block;
+        }
+
+        .copy-btn:not(:disabled) {
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #00ff00;
+            text-align: center;
+            font-size: 0.75rem;
+            opacity: 0.6;
+            letter-spacing: 0.1em;
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>▓▒░ THE BLOC ░▒▓</h1>
+            <div class="subtitle">TRANSLATOR v1.0</div>
+        </div>
+
+        <button class="mode-btn" id="modeBtn">► ENGLISH → BLOC</button>
+
+        <div class="input-group">
+            <label id="inputLabel">┌ SOURCE TEXT</label>
+            <textarea id="inputText" placeholder="Enter your text..."></textarea>
+        </div>
+
+        <div class="button-row">
+            <button class="translate-btn" id="translateBtn">▼ TRANSLATE ▼</button>
+            <button id="clearBtn">✕ CLEAR</button>
+        </div>
+
+        <div class="input-group">
+            <label id="outputLabel">┌ ENCRYPTED RESULT</label>
+            <textarea id="outputText" readonly></textarea>
+        </div>
+
+        <button class="copy-btn" id="copyBtn" disabled>◄ COPY</button>
+
+        <div class="footer">
+            █▓▒░ PROPRIETARY ENCRYPTION SYSTEM ░▒▓█
+        </div>
+    </div>
+
+    <script>
+        const SEPARATOR = '‡';
+        let mode = 'encode';
+
+        const charMap = {
+            'a': '▓█', 'b': '░▒', 'c': '▒▓', 'd': '█░', 'e': '▓░',
+            'f': '▒█', 'g': '░▓', 'h': '█▒', 'i': '▓▒', 'j': '░█',
+            'k': '▒░', 'l': '█▓', 'm': '░░', 'n': '▓▓', 'o': '▒▒',
+            'p': '██', 'q': '▓█░', 'r': '░▒▓', 's': '▒▓█', 't': '█░▒',
+            'u': '▓░█', 'v': '▒█░', 'w': '░▓▒', 'x': '█▒▓', 'y': '▓▒░',
+            'z': '░█▓',
+            'A': '▓█▒', 'B': '░▒█', 'C': '▒▓░', 'D': '█░▓', 'E': '▓░▒',
+            'F': '▒█▓', 'G': '░▓█', 'H': '█▒░', 'I': '▓▒█', 'J': '░█▒',
+            'K': '▒░▓', 'L': '█▓░', 'M': '░░▒', 'N': '▓▓█', 'O': '▒▒░',
+            'P': '██▓', 'Q': '▓█░▒', 'R': '░▒▓█', 'S': '▒▓█░', 'T': '█░▒▓',
+            'U': '▓░█▒', 'V': '▒█░▓', 'W': '░▓▒█', 'X': '█▒▓░', 'Y': '▓▒░█',
+            'Z': '░█▓▒',
+            '0': '◄►', '1': '▲▼', '2': '◄▲', '3': '►▼', '4': '▲►',
+            '5': '▼◄', '6': '►▲', '7': '◄▼', '8': '▼►', '9': '▲◄',
+            ' ': '╬', '.': '╦', ',': '╣', '!': '╠', '?': '╩',
+            ':': '╔', ';': '╗', '-': '═', '_': '║', '"': '╚',
+            "'": '╝', '(': '╬═', ')': '═╬', '\n': '∎'
+        };
+
+        const reverseMap = Object.fromEntries(
+            Object.entries(charMap).map(([k, v]) => [v, k])
+        );
+
+        function encode(text) {
+            return text.split('').map(char => {
+                const encoded = charMap[char] || char;
+                return encoded + SEPARATOR;
+            }).join('').slice(0, -1);
+        }
+
+        function decode(text) {
+            const parts = text.split(SEPARATOR);
+            return parts.map(part => reverseMap[part] || part).join('');
+        }
+
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const modeBtn = document.getElementById('modeBtn');
+        const translateBtn = document.getElementById('translateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const inputLabel = document.getElementById('inputLabel');
+        const outputLabel = document.getElementById('outputLabel');
+
+        modeBtn.addEventListener('click', () => {
+            mode = mode === 'encode' ? 'decode' : 'encode';
+            
+            const temp = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = temp;
+
+            if (mode === 'encode') {
+                modeBtn.textContent = '► ENGLISH → BLOC';
+                inputLabel.textContent = '┌ SOURCE TEXT';
+                outputLabel.textContent = '┌ ENCRYPTED RESULT';
+                inputText.placeholder = 'Enter your text...';
+            } else {
+                modeBtn.textContent = '► BLOC → ENGLISH';
+                inputLabel.textContent = '┌ ENCRYPTED TEXT';
+                outputLabel.textContent = '┌ DECODED TEXT';
+                inputText.placeholder = 'Enter encrypted text...';
+            }
+        });
+
+        translateBtn.addEventListener('click', () => {
+            const input = inputText.value;
+            if (!input) return;
+
+            outputText.value = mode === 'encode' ? encode(input) : decode(input);
+            copyBtn.disabled = false;
+        });
+
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            copyBtn.disabled = true;
+        });
+
+        copyBtn.addEventListener('click', () => {
+            outputText.select();
+            navigator.clipboard.writeText(outputText.value);
+        });
+
+        outputText.addEventListener('input', () => {
+            copyBtn.disabled = !outputText.value;
+        });
+    </script>
+</body>
+</html>
