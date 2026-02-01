@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bloc - Message Link Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: black;
+            color: #00ff00;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            border: 4px solid #00ff00;
+            padding: 30px;
+            background: rgba(0, 20, 0, 0.8);
+            box-shadow: 
+                0 0 20px rgba(0, 255, 0, 0.3),
+                inset 0 0 20px rgba(0, 255, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            letter-spacing: 0.3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-bottom: 30px;
+            letter-spacing: 0.1em;
+        }
+
+        .header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            border: 2px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 30px;
+            background: rgba(0, 255, 0, 0.05);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.1em;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: black;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 3px rgba(0, 255, 0, 0.5);
+            caret-color: #00ff00;
+        }
+
+        textarea {
+            height: 120px;
+            resize: none;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff40;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: rgba(0, 255, 0, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 1.125rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: black;
+            text-shadow: none;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #00ff00;
+        }
+
+        .result-section.visible {
+            display: block;
+        }
+
+        .url-display {
+            background: black;
+            border: 2px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-size: 0.875rem;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #00ff00;
+            text-align: center;
+            font-size: 0.75rem;
+            opacity: 0.6;
+            letter-spacing: 0.1em;
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>▓▒░ THE BLOC ░▒▓</h1>
+            <div class="subtitle">MESSAGE LINK GENERATOR</div>
+        </div>
+
+        <div class="info-box">
+            ℹ️ Create a shareable link with your encrypted message. Perfect for QR codes on posters!
+        </div>
+
+        <label>┌ YOUR MESSAGE (ENGLISH)</label>
+        <textarea id="inputMessage" placeholder="Enter your message..."></textarea>
+
+        <button id="generateBtn">▼ GENERATE LINK ▼</button>
+
+        <div class="result-section" id="resultSection">
+            <label>┌ ENCRYPTED MESSAGE</label>
+            <div class="url-display" id="encryptedText"></div>
+
+            <label>┌ SHAREABLE URL</label>
+            <div class="url-display" id="generatedUrl"></div>
+
+            <button id="copyUrlBtn">◄ COPY URL</button>
+            <button id="testBtn" style="background: rgba(0, 255, 0, 0.1);">🔗 TEST LINK</button>
+        </div>
+
+        <div class="footer">
+            █▓▒░ CREATE QR CODES WITH THIS URL FOR YOUR POSTERS ░▒▓█
+        </div>
+    </div>
+
+    <script>
+        const SEPARATOR = '‡';
+
+        const charMap = {
+            'a': '▓█', 'b': '░▒', 'c': '▒▓', 'd': '█░', 'e': '▓░',
+            'f': '▒█', 'g': '░▓', 'h': '█▒', 'i': '▓▒', 'j': '░█',
+            'k': '▒░', 'l': '█▓', 'm': '░░', 'n': '▓▓', 'o': '▒▒',
+            'p': '██', 'q': '▓█░', 'r': '░▒▓', 's': '▒▓█', 't': '█░▒',
+            'u': '▓░█', 'v': '▒█░', 'w': '░▓▒', 'x': '█▒▓', 'y': '▓▒░',
+            'z': '░█▓',
+            'A': '▓█▒', 'B': '░▒█', 'C': '▒▓░', 'D': '█░▓', 'E': '▓░▒',
+            'F': '▒█▓', 'G': '░▓█', 'H': '█▒░', 'I': '▓▒█', 'J': '░█▒',
+            'K': '▒░▓', 'L': '█▓░', 'M': '░░▒', 'N': '▓▓█', 'O': '▒▒░',
+            'P': '██▓', 'Q': '▓█░▒', 'R': '░▒▓█', 'S': '▒▓█░', 'T': '█░▒▓',
+            'U': '▓░█▒', 'V': '▒█░▓', 'W': '░▓▒█', 'X': '█▒▓░', 'Y': '▓▒░█',
+            'Z': '░█▓▒',
+            '0': '◄►', '1': '▲▼', '2': '◄▲', '3': '►▼', '4': '▲►',
+            '5': '▼◄', '6': '►▲', '7': '◄▼', '8': '▼►', '9': '▲◄',
+            ' ': '╬', '.': '╦', ',': '╣', '!': '╠', '?': '╩',
+            ':': '╔', ';': '╗', '-': '═', '_': '║', '"': '╚',
+            "'": '╝', '(': '╬═', ')': '═╬', '\n': '∎'
+        };
+
+        function encode(text) {
+            return text.split('').map(char => {
+                const encoded = charMap[char] || char;
+                return encoded + SEPARATOR;
+            }).join('').slice(0, -1);
+        }
+
+        const inputMessage = document.getElementById('inputMessage');
+        const generateBtn = document.getElementById('generateBtn');
+        const resultSection = document.getElementById('resultSection');
+        const encryptedText = document.getElementById('encryptedText');
+        const generatedUrl = document.getElementById('generatedUrl');
+        const copyUrlBtn = document.getElementById('copyUrlBtn');
+        const testBtn = document.getElementById('testBtn');
+
+        let currentUrl = '';
+
+        generateBtn.addEventListener('click', () => {
+            const message = inputMessage.value.trim();
+            if (!message) return;
+
+            const encrypted = encode(message);
+            encryptedText.textContent = encrypted;
+
+            // Generate URL (replace with your actual domain)
+            const baseUrl = window.location.origin;
+            currentUrl = `${baseUrl}/msg.html?c=${encodeURIComponent(encrypted)}`;
+            generatedUrl.textContent = currentUrl;
+
+            resultSection.classList.add('visible');
+        });
+
+        copyUrlBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                copyUrlBtn.textContent = '✓ COPIED!';
+                setTimeout(() => {
+                    copyUrlBtn.textContent = '◄ COPY URL';
+                }, 2000);
+            });
+        });
+
+        testBtn.addEventListener('click', () => {
+            window.open(currentUrl, '_blank');
+        });
+    </script>
+</body>
+</html>
