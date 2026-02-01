@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Bloc - Translator v2.0</title>
-    <meta name="description" content="The Bloc - Proprietary encryption system with OCR image reading">
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
+    <meta name="description" content="The Bloc - Proprietary encryption system with image reference viewer">
     <style>
         * {
             margin: 0;
@@ -33,7 +32,7 @@
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             border: 4px solid #00ff00;
             padding: 30px;
             background: rgba(0, 20, 0, 0.8);
@@ -93,6 +92,107 @@
             background: #00ff00;
             color: black;
             text-shadow: none;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .image-viewer-section {
+            border: 2px solid #00ff00;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.1em;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .upload-area {
+            border: 2px dashed #00ff00;
+            padding: 15px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+            font-size: 0.875rem;
+        }
+
+        .upload-label:hover {
+            background: #00ff00;
+            color: black;
+            text-shadow: none;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .image-display {
+            flex: 1;
+            border: 2px solid #00ff00;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-display img {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .image-placeholder {
+            color: rgba(0, 255, 0, 0.3);
+            text-align: center;
+            padding: 20px;
+            font-size: 0.875rem;
+        }
+
+        .image-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .zoom-btn {
+            padding: 8px 15px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .zoom-btn:hover {
+            background: #00ff00;
+            color: black;
         }
 
         .input-group {
@@ -175,68 +275,14 @@
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
         }
 
-        .upload-section {
-            border: 2px dashed #00ff00;
-            padding: 20px;
-            text-align: center;
+        .info-box {
+            border: 2px solid #00ff00;
+            padding: 15px;
             margin-bottom: 20px;
             background: rgba(0, 255, 0, 0.05);
-        }
-
-        .upload-label {
-            display: inline-block;
-            padding: 12px 24px;
-            background: transparent;
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
-            margin-bottom: 10px;
-        }
-
-        .upload-label:hover {
-            background: #00ff00;
-            color: black;
-            text-shadow: none;
-        }
-
-        #imageInput {
-            display: none;
-        }
-
-        .preview-container {
-            margin-top: 15px;
-            border: 2px solid #00ff00;
-            padding: 10px;
-            background: black;
-            display: none;
-        }
-
-        .preview-container img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .ocr-status {
-            margin-top: 10px;
-            padding: 10px;
             text-align: center;
             font-size: 0.875rem;
-            display: none;
-        }
-
-        .ocr-status.loading {
-            display: block;
-            color: #00ff00;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            line-height: 1.6;
         }
 
         .footer {
@@ -249,7 +295,11 @@
             letter-spacing: 0.1em;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
             h1 {
                 font-size: 1.75rem;
             }
@@ -261,6 +311,10 @@
             button {
                 padding: 12px 20px;
                 font-size: 0.875rem;
+            }
+
+            .image-display {
+                min-height: 200px;
             }
         }
     </style>
@@ -276,192 +330,62 @@
 
         <button class="mode-btn" id="modeBtn">► ENGLISH → BLOC</button>
 
-        <!-- NEW: Upload Image Section -->
-        <div class="upload-section">
-            <label class="upload-label" for="imageInput">
-                📷 UPLOAD IMAGE TO EXTRACT TEXT
-            </label>
-            <input type="file" id="imageInput" accept="image/*">
-            <div class="ocr-status" id="ocrStatus"></div>
-            <div class="preview-container" id="previewContainer">
-                <img id="preview" alt="Preview">
+        <div class="info-box">
+            ℹ️ Upload an image with Bloc text, view it as reference, then manually copy and paste the text below to translate
+        </div>
+
+        <div class="two-column">
+            <!-- Image Viewer Section -->
+            <div class="image-viewer-section">
+                <div class="section-title">┌ IMAGE REFERENCE VIEWER</div>
+                <div class="upload-area">
+                    <label class="upload-label" for="imageInput">
+                        📷 LOAD IMAGE
+                    </label>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
+                <div class="image-display" id="imageDisplay">
+                    <div class="image-placeholder">
+                        No image loaded<br>
+                        ▓▒░ Upload an image to view ░▒▓
+                    </div>
+                </div>
+                <div class="image-controls">
+                    <button class="zoom-btn" id="zoomIn">+ ZOOM</button>
+                    <button class="zoom-btn" id="zoomOut">- ZOOM</button>
+                    <button class="zoom-btn" id="clearImage">✕ CLEAR</button>
+                </div>
+            </div>
+
+            <!-- Translation Section -->
+            <div class="image-viewer-section">
+                <div class="section-title">┌ TRANSLATION WORKSPACE</div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label id="inputLabel">SOURCE TEXT</label>
+                    <textarea id="inputText" placeholder="Paste Bloc text here..."></textarea>
+                </div>
+                <div class="button-row" style="margin: 10px 0;">
+                    <button class="translate-btn" id="translateBtn">▼ TRANSLATE</button>
+                    <button id="clearBtn" style="padding: 12px 20px;">✕ CLEAR</button>
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label id="outputLabel">RESULT</label>
+                    <textarea id="outputText" readonly style="height: 120px;"></textarea>
+                </div>
             </div>
         </div>
 
-        <div class="input-group">
-            <label id="inputLabel">┌ SOURCE TEXT</label>
-            <textarea id="inputText" placeholder="Enter your text or upload an image..."></textarea>
-        </div>
-
-        <div class="button-row">
-            <button class="translate-btn" id="translateBtn">▼ TRANSLATE ▼</button>
-            <button id="clearBtn">✕ CLEAR</button>
-        </div>
-
-        <div class="input-group">
-            <label id="outputLabel">┌ ENCRYPTED RESULT</label>
-            <textarea id="outputText" readonly></textarea>
-        </div>
-
-        <button class="copy-btn" id="copyBtn" disabled>◄ COPY</button>
+        <button class="copy-btn" id="copyBtn" disabled>◄ COPY RESULT</button>
 
         <div class="footer">
-            █▓▒░ PROPRIETARY ENCRYPTION SYSTEM • OCR POWERED ░▒▓█
+            █▓▒░ PROPRIETARY ENCRYPTION SYSTEM • IMAGE VIEWER v2.0 ░▒▓█
         </div>
     </div>
 
     <script>
         const SEPARATOR = '‡';
         let mode = 'encode';
+        let currentZoom = 1;
+        let currentImage = null;
 
-        const charMap = {
-            'a': '▓█', 'b': '░▒', 'c': '▒▓', 'd': '█░', 'e': '▓░',
-            'f': '▒█', 'g': '░▓', 'h': '█▒', 'i': '▓▒', 'j': '░█',
-            'k': '▒░', 'l': '█▓', 'm': '░░', 'n': '▓▓', 'o': '▒▒',
-            'p': '██', 'q': '▓█░', 'r': '░▒▓', 's': '▒▓█', 't': '█░▒',
-            'u': '▓░█', 'v': '▒█░', 'w': '░▓▒', 'x': '█▒▓', 'y': '▓▒░',
-            'z': '░█▓',
-            'A': '▓█▒', 'B': '░▒█', 'C': '▒▓░', 'D': '█░▓', 'E': '▓░▒',
-            'F': '▒█▓', 'G': '░▓█', 'H': '█▒░', 'I': '▓▒█', 'J': '░█▒',
-            'K': '▒░▓', 'L': '█▓░', 'M': '░░▒', 'N': '▓▓█', 'O': '▒▒░',
-            'P': '██▓', 'Q': '▓█░▒', 'R': '░▒▓█', 'S': '▒▓█░', 'T': '█░▒▓',
-            'U': '▓░█▒', 'V': '▒█░▓', 'W': '░▓▒█', 'X': '█▒▓░', 'Y': '▓▒░█',
-            'Z': '░█▓▒',
-            '0': '◄►', '1': '▲▼', '2': '◄▲', '3': '►▼', '4': '▲►',
-            '5': '▼◄', '6': '►▲', '7': '◄▼', '8': '▼►', '9': '▲◄',
-            ' ': '╬', '.': '╦', ',': '╣', '!': '╠', '?': '╩',
-            ':': '╔', ';': '╗', '-': '═', '_': '║', '"': '╚',
-            "'": '╝', '(': '╬═', ')': '═╬', '\n': '∎'
-        };
-
-        const reverseMap = Object.fromEntries(
-            Object.entries(charMap).map(([k, v]) => [v, k])
-        );
-
-        function encode(text) {
-            return text.split('').map(char => {
-                const encoded = charMap[char] || char;
-                return encoded + SEPARATOR;
-            }).join('').slice(0, -1);
-        }
-
-        function decode(text) {
-            const parts = text.split(SEPARATOR);
-            return parts.map(part => reverseMap[part] || part).join('');
-        }
-
-        const inputText = document.getElementById('inputText');
-        const outputText = document.getElementById('outputText');
-        const modeBtn = document.getElementById('modeBtn');
-        const translateBtn = document.getElementById('translateBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const inputLabel = document.getElementById('inputLabel');
-        const outputLabel = document.getElementById('outputLabel');
-        const imageInput = document.getElementById('imageInput');
-        const preview = document.getElementById('preview');
-        const previewContainer = document.getElementById('previewContainer');
-        const ocrStatus = document.getElementById('ocrStatus');
-
-        modeBtn.addEventListener('click', () => {
-            mode = mode === 'encode' ? 'decode' : 'encode';
-            
-            const temp = inputText.value;
-            inputText.value = outputText.value;
-            outputText.value = temp;
-
-            if (mode === 'encode') {
-                modeBtn.textContent = '► ENGLISH → BLOC';
-                inputLabel.textContent = '┌ SOURCE TEXT';
-                outputLabel.textContent = '┌ ENCRYPTED RESULT';
-                inputText.placeholder = 'Enter your text or upload an image...';
-            } else {
-                modeBtn.textContent = '► BLOC → ENGLISH';
-                inputLabel.textContent = '┌ ENCRYPTED TEXT';
-                outputLabel.textContent = '┌ DECODED TEXT';
-                inputText.placeholder = 'Enter encrypted text or upload an image...';
-            }
-        });
-
-        translateBtn.addEventListener('click', () => {
-            const input = inputText.value;
-            if (!input) return;
-
-            outputText.value = mode === 'encode' ? encode(input) : decode(input);
-            copyBtn.disabled = false;
-        });
-
-        clearBtn.addEventListener('click', () => {
-            inputText.value = '';
-            outputText.value = '';
-            copyBtn.disabled = true;
-            previewContainer.style.display = 'none';
-            ocrStatus.style.display = 'none';
-        });
-
-        copyBtn.addEventListener('click', () => {
-            outputText.select();
-            navigator.clipboard.writeText(outputText.value);
-        });
-
-        // NEW: Image Upload and OCR
-        imageInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                preview.src = event.target.result;
-                previewContainer.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-
-            // Show loading status
-            ocrStatus.textContent = '⟳ SCANNING IMAGE...';
-            ocrStatus.className = 'ocr-status loading';
-
-            try {
-                // Perform OCR
-                const result = await Tesseract.recognize(file, 'eng', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const progress = Math.round(m.progress * 100);
-                            ocrStatus.textContent = `⟳ PROCESSING... ${progress}%`;
-                        }
-                    }
-                });
-
-                // Extract text and put in input
-                const extractedText = result.data.text.trim();
-                if (extractedText) {
-                    inputText.value = extractedText;
-                    ocrStatus.textContent = '✓ TEXT EXTRACTED SUCCESSFULLY';
-                    ocrStatus.className = 'ocr-status';
-                    ocrStatus.style.display = 'block';
-                    ocrStatus.style.color = '#00ff00';
-                    
-                    setTimeout(() => {
-                        ocrStatus.style.display = 'none';
-                    }, 3000);
-                } else {
-                    ocrStatus.textContent = '✗ NO TEXT FOUND IN IMAGE';
-                    ocrStatus.className = 'ocr-status';
-                    ocrStatus.style.display = 'block';
-                    ocrStatus.style.color = '#ff0000';
-                }
-            } catch (error) {
-                ocrStatus.textContent = '✗ ERROR PROCESSING IMAGE';
-                ocrStatus.className = 'ocr-status';
-                ocrStatus.style.display = 'block';
-                ocrStatus.style.color = '#ff0000';
-                console.error('OCR Error:', error);
-            }
-        });
-
-        outputText.addEventListener('input', () => {
-            copyBtn.disabled = !outputText.value;
-        });
-    </script>
-</body>
-</html>
+        const char
