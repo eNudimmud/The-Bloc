@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Bloc - Translator</title>
-    <meta name="description" content="The Bloc - Proprietary encryption system with retro 80s Minitel aesthetic">
+    <title>The Bloc - Translator v2.0</title>
+    <meta name="description" content="The Bloc - Proprietary encryption system with OCR image reading">
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
     <style>
         * {
             margin: 0;
@@ -55,6 +56,16 @@
             opacity: 0.8;
             margin-bottom: 30px;
             letter-spacing: 0.1em;
+        }
+
+        .version-badge {
+            background: #00ff00;
+            color: black;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            border-radius: 2px;
+            margin-left: 8px;
+            font-weight: bold;
         }
 
         .header {
@@ -164,6 +175,70 @@
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
         }
 
+        .upload-section {
+            border: 2px dashed #00ff00;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+            margin-bottom: 10px;
+        }
+
+        .upload-label:hover {
+            background: #00ff00;
+            color: black;
+            text-shadow: none;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 15px;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            background: black;
+            display: none;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .ocr-status {
+            margin-top: 10px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .ocr-status.loading {
+            display: block;
+            color: #00ff00;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .footer {
             margin-top: 30px;
             padding-top: 20px;
@@ -194,14 +269,28 @@
     <div class="container">
         <div class="header">
             <h1>▓▒░ THE BLOC ░▒▓</h1>
-            <div class="subtitle">TRANSLATOR v1.0</div>
+            <div class="subtitle">
+                TRANSLATOR <span class="version-badge">v2.0</span>
+            </div>
         </div>
 
         <button class="mode-btn" id="modeBtn">► ENGLISH → BLOC</button>
 
+        <!-- NEW: Upload Image Section -->
+        <div class="upload-section">
+            <label class="upload-label" for="imageInput">
+                📷 UPLOAD IMAGE TO EXTRACT TEXT
+            </label>
+            <input type="file" id="imageInput" accept="image/*">
+            <div class="ocr-status" id="ocrStatus"></div>
+            <div class="preview-container" id="previewContainer">
+                <img id="preview" alt="Preview">
+            </div>
+        </div>
+
         <div class="input-group">
             <label id="inputLabel">┌ SOURCE TEXT</label>
-            <textarea id="inputText" placeholder="Enter your text..."></textarea>
+            <textarea id="inputText" placeholder="Enter your text or upload an image..."></textarea>
         </div>
 
         <div class="button-row">
@@ -217,7 +306,7 @@
         <button class="copy-btn" id="copyBtn" disabled>◄ COPY</button>
 
         <div class="footer">
-            █▓▒░ PROPRIETARY ENCRYPTION SYSTEM ░▒▓█
+            █▓▒░ PROPRIETARY ENCRYPTION SYSTEM • OCR POWERED ░▒▓█
         </div>
     </div>
 
@@ -269,6 +358,10 @@
         const copyBtn = document.getElementById('copyBtn');
         const inputLabel = document.getElementById('inputLabel');
         const outputLabel = document.getElementById('outputLabel');
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('previewContainer');
+        const ocrStatus = document.getElementById('ocrStatus');
 
         modeBtn.addEventListener('click', () => {
             mode = mode === 'encode' ? 'decode' : 'encode';
@@ -281,12 +374,12 @@
                 modeBtn.textContent = '► ENGLISH → BLOC';
                 inputLabel.textContent = '┌ SOURCE TEXT';
                 outputLabel.textContent = '┌ ENCRYPTED RESULT';
-                inputText.placeholder = 'Enter your text...';
+                inputText.placeholder = 'Enter your text or upload an image...';
             } else {
                 modeBtn.textContent = '► BLOC → ENGLISH';
                 inputLabel.textContent = '┌ ENCRYPTED TEXT';
                 outputLabel.textContent = '┌ DECODED TEXT';
-                inputText.placeholder = 'Enter encrypted text...';
+                inputText.placeholder = 'Enter encrypted text or upload an image...';
             }
         });
 
@@ -302,11 +395,68 @@
             inputText.value = '';
             outputText.value = '';
             copyBtn.disabled = true;
+            previewContainer.style.display = 'none';
+            ocrStatus.style.display = 'none';
         });
 
         copyBtn.addEventListener('click', () => {
             outputText.select();
             navigator.clipboard.writeText(outputText.value);
+        });
+
+        // NEW: Image Upload and OCR
+        imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                preview.src = event.target.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Show loading status
+            ocrStatus.textContent = '⟳ SCANNING IMAGE...';
+            ocrStatus.className = 'ocr-status loading';
+
+            try {
+                // Perform OCR
+                const result = await Tesseract.recognize(file, 'eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            ocrStatus.textContent = `⟳ PROCESSING... ${progress}%`;
+                        }
+                    }
+                });
+
+                // Extract text and put in input
+                const extractedText = result.data.text.trim();
+                if (extractedText) {
+                    inputText.value = extractedText;
+                    ocrStatus.textContent = '✓ TEXT EXTRACTED SUCCESSFULLY';
+                    ocrStatus.className = 'ocr-status';
+                    ocrStatus.style.display = 'block';
+                    ocrStatus.style.color = '#00ff00';
+                    
+                    setTimeout(() => {
+                        ocrStatus.style.display = 'none';
+                    }, 3000);
+                } else {
+                    ocrStatus.textContent = '✗ NO TEXT FOUND IN IMAGE';
+                    ocrStatus.className = 'ocr-status';
+                    ocrStatus.style.display = 'block';
+                    ocrStatus.style.color = '#ff0000';
+                }
+            } catch (error) {
+                ocrStatus.textContent = '✗ ERROR PROCESSING IMAGE';
+                ocrStatus.className = 'ocr-status';
+                ocrStatus.style.display = 'block';
+                ocrStatus.style.color = '#ff0000';
+                console.error('OCR Error:', error);
+            }
         });
 
         outputText.addEventListener('input', () => {
