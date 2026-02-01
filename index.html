@@ -60,30 +60,30 @@
         .header {
             border-bottom: 2px solid #00ff00;
             padding-bottom: 20px;
-            margin-bottom: 30px;
-            position: relative;
+            margin-bottom: 20px;
         }
 
         .generator-link {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 8px 15px;
+            display: block;
+            text-align: center;
+            padding: 10px 20px;
             background: transparent;
             border: 2px solid #00ff00;
             color: #00ff00;
             text-decoration: none;
             font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             transition: all 0.3s;
             letter-spacing: 0.1em;
-            opacity: 0.7;
+            margin: 0 auto 30px;
+            max-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
 
         .generator-link:hover {
             background: #00ff00;
             color: black;
-            opacity: 1;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
         }
 
         .mode-btn {
@@ -212,10 +212,8 @@
             }
 
             .generator-link {
-                position: static;
-                display: block;
-                text-align: center;
-                margin-top: 15px;
+                font-size: 0.75rem;
+                padding: 8px 15px;
             }
         }
     </style>
@@ -223,10 +221,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <a href="generator.html" class="generator-link">⚙ GENERATOR</a>
             <h1>▓▒░ THE BLOC ░▒▓</h1>
             <div class="subtitle">TRANSLATOR v1.0</div>
         </div>
+
+        <a href="generator.html" class="generator-link">⚙ MESSAGE LINK GENERATOR</a>
 
         <button class="mode-btn" id="modeBtn">► ENGLISH → BLOC</button>
 
