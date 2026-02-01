@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Bloc - Message Link Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -60,6 +61,29 @@
             border-bottom: 2px solid #00ff00;
             padding-bottom: 20px;
             margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+            letter-spacing: 0.1em;
+            margin: 0 auto 30px;
+            max-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: black;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
         }
 
         .info-box {
@@ -147,6 +171,30 @@
             font-size: 0.875rem;
         }
 
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: white;
+            border: 2px solid #00ff00;
+            margin: 20px 0;
+        }
+
+        #qrcode {
+            display: inline-block;
+        }
+
+        #qrcode img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .button-small {
+            padding: 12px 20px;
+            font-size: 0.875rem;
+        }
+
         .footer {
             margin-top: 30px;
             padding-top: 20px;
@@ -165,6 +213,10 @@
             .container {
                 padding: 20px;
             }
+
+            .qr-container {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -175,6 +227,8 @@
             <div class="subtitle">MESSAGE LINK GENERATOR</div>
         </div>
 
+        <a href="index.html" class="back-link">← BACK TO TRANSLATOR</a>
+
         <div class="info-box">
             ℹ️ Create a shareable link with your encrypted message. Perfect for QR codes on posters!
         </div>
@@ -182,7 +236,7 @@
         <label>┌ YOUR MESSAGE (ENGLISH)</label>
         <textarea id="inputMessage" placeholder="Enter your message..."></textarea>
 
-        <button id="generateBtn">▼ GENERATE LINK ▼</button>
+        <button id="generateBtn">▼ GENERATE LINK & QR CODE ▼</button>
 
         <div class="result-section" id="resultSection">
             <label>┌ ENCRYPTED MESSAGE</label>
@@ -191,12 +245,18 @@
             <label>┌ SHAREABLE URL</label>
             <div class="url-display" id="generatedUrl"></div>
 
-            <button id="copyUrlBtn">◄ COPY URL</button>
-            <button id="testBtn" style="background: rgba(0, 255, 0, 0.1);">🔗 TEST LINK</button>
+            <label style="text-align: center; margin-top: 20px;">┌ QR CODE</label>
+            <div class="qr-container">
+                <div id="qrcode"></div>
+            </div>
+
+            <button id="copyUrlBtn" class="button-small">◄ COPY URL</button>
+            <button id="downloadQRBtn" class="button-small">⬇ DOWNLOAD QR CODE</button>
+            <button id="testBtn" class="button-small" style="background: rgba(0, 255, 0, 0.1);">🔗 TEST LINK</button>
         </div>
 
         <div class="footer">
-            █▓▒░ CREATE QR CODES WITH THIS URL FOR YOUR POSTERS ░▒▓█
+            █▓▒░ USE THIS QR CODE ON YOUR POSTERS ░▒▓█
         </div>
     </div>
 
@@ -236,9 +296,11 @@
         const encryptedText = document.getElementById('encryptedText');
         const generatedUrl = document.getElementById('generatedUrl');
         const copyUrlBtn = document.getElementById('copyUrlBtn');
+        const downloadQRBtn = document.getElementById('downloadQRBtn');
         const testBtn = document.getElementById('testBtn');
 
         let currentUrl = '';
+        let qrcodeInstance = null;
 
         generateBtn.addEventListener('click', () => {
             const message = inputMessage.value.trim();
@@ -247,10 +309,24 @@
             const encrypted = encode(message);
             encryptedText.textContent = encrypted;
 
-            // Generate URL (replace with your actual domain)
-            const baseUrl = window.location.origin;
-            currentUrl = `${baseUrl}/msg.html?c=${encodeURIComponent(encrypted)}`;
+            // Generate URL
+            const baseUrl = window.location.origin + window.location.pathname.replace('generator.html', '');
+            currentUrl = `${baseUrl}msg.html?c=${encodeURIComponent(encrypted)}`;
             generatedUrl.textContent = currentUrl;
+
+            // Clear previous QR code
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+
+            // Generate new QR code
+            qrcodeInstance = new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
             resultSection.classList.add('visible');
         });
@@ -262,6 +338,26 @@
                     copyUrlBtn.textContent = '◄ COPY URL';
                 }, 2000);
             });
+        });
+
+        downloadQRBtn.addEventListener('click', () => {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (canvas) {
+                const url = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'the-bloc-qr-code.png';
+                link.href = url;
+                link.click();
+            } else {
+                // Fallback for image-based QR code
+                const img = document.querySelector('#qrcode img');
+                if (img) {
+                    const link = document.createElement('a');
+                    link.download = 'the-bloc-qr-code.png';
+                    link.href = img.src;
+                    link.click();
+                }
+            }
         });
 
         testBtn.addEventListener('click', () => {
