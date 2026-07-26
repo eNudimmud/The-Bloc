@@ -1,0 +1,162 @@
+git add og.html && git commit -m "Add thumbnail maker" && git push<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bloc - Thumbnail Maker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;background:#000;color:#0f0;min-height:100vh;padding:20px;
+background:repeating-linear-gradient(0deg,rgba(0,0,0,.15),rgba(0,0,0,.15) 1px,transparent 1px,transparent 2px)}
+.wrap{max-width:900px;margin:0 auto;border:4px solid #0f0;padding:20px;background:rgba(0,20,0,.8);
+box-shadow:0 0 20px rgba(0,255,0,.3),inset 0 0 20px rgba(0,255,0,.1)}
+h1{text-align:center;font-size:1.5rem;letter-spacing:.2em;margin-bottom:6px;text-shadow:0 0 5px rgba(0,255,0,.7)}
+.sub{text-align:center;font-size:.75rem;opacity:.8;letter-spacing:.1em;padding-bottom:16px;border-bottom:2px solid #0f0;margin-bottom:20px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+button{padding:12px 18px;background:transparent;border:2px solid #0f0;color:#0f0;font-family:'Courier New',monospace;
+font-size:.85rem;cursor:pointer;transition:.2s;letter-spacing:.08em;text-shadow:0 0 5px rgba(0,255,0,.7)}
+button:hover{background:#0f0;color:#000;text-shadow:none}
+button.on{background:#0f0;color:#000;text-shadow:none}
+canvas{width:100%;height:auto;display:block;border:2px solid #0f0;background:#000}
+.note{font-size:.75rem;opacity:.65;margin-top:14px;line-height:1.6;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>▓▒░ THUMBNAIL MAKER ░▒▓</h1>
+  <div class="sub">THE BLOC · SOCIAL CARD</div>
+
+  <div class="row">
+    <button id="bWide" class="on">▬ 1200×630 (OG)</button>
+    <button id="bSquare">■ 1080×1080 (LINKTREE)</button>
+  </div>
+
+  <canvas id="cv" width="1200" height="630"></canvas>
+
+  <div class="row" style="margin-top:16px">
+    <button id="dl">⬇ DOWNLOAD PNG</button>
+  </div>
+
+  <div class="note">
+    ▓ Bannière 1200×630 → balise og:image (X, Discord, Telegram)<br>
+    ▓ Carré 1080×1080 → vignette custom dans l'éditeur Linktree<br>
+    ▓ Le bloc central reste lisible même si la plateforme recadre.
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W = 1200, H = 630;
+
+// "the bloc" encodé avec le chiffre maison
+const CIPHER = '█░▒‡█▒‡▓░‡╬‡░▒‡█▓‡▒▒‡▒▓';
+
+function tracked(text, cx, y, ls) {
+  const chars = [...text];
+  let w = 0;
+  chars.forEach(c => w += ctx.measureText(c).width + ls);
+  w -= ls;
+  let x = cx - w / 2;
+  chars.forEach(c => { ctx.fillText(c, x, y); x += ctx.measureText(c).width + ls; });
+  return w;
+}
+
+function render() {
+  cv.width = W; cv.height = H;
+  const s = Math.min(W, H) / 630;   // échelle de base
+  const cx = W / 2;
+
+  // fond
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  // halo central
+  const g = ctx.createRadialGradient(cx, H / 2, 0, cx, H / 2, Math.max(W, H) * 0.6);
+  g.addColorStop(0, 'rgba(0,255,0,0.10)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // scanlines CRT
+  ctx.fillStyle = 'rgba(0,255,0,0.045)';
+  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+
+  // cadre
+  const m = 26 * s;
+  ctx.save();
+  ctx.shadowColor = '#00ff00';
+  ctx.shadowBlur = 22 * s;
+  ctx.strokeStyle = '#00ff00';
+  ctx.lineWidth = 5 * s;
+  ctx.strokeRect(m, m, W - m * 2, H - m * 2);
+  ctx.restore();
+
+  // texte
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#00ff00';
+  ctx.shadowColor = '#00ff00';
+
+  const lines = [
+    { t: '█ ▓ ▒ ░ ▒ ▓ █', size: 26, ls: 10, gap: 46, w: '400' },
+    { t: 'THE BLOC',      size: 104, ls: 8,  gap: 34, w: '700' },
+    { t: 'TRANSLATOR',    size: 34, ls: 16, gap: 40, w: '400' },
+    { t: 'rule',          size: 0,  ls: 0,  gap: 40, w: '400' },
+    { t: CIPHER,          size: 28, ls: 3,  gap: 52, w: '400' },
+    { t: 'PROPRIETARY ENCRYPTION SYSTEM', size: 20, ls: 7, gap: 0, w: '400' }
+  ];
+
+  // hauteur totale pour centrage vertical
+  let total = 0;
+  lines.forEach(l => total += (l.size * s) + (l.gap * s));
+  total -= lines[lines.length - 1].gap * s;
+
+  let y = H / 2 - total / 2 + (lines[0].size * s) / 2;
+
+  lines.forEach(l => {
+    if (l.t === 'rule') {
+      ctx.save();
+      ctx.shadowBlur = 10 * s;
+      ctx.fillRect(cx - 150 * s, y - 1 * s, 300 * s, 2 * s);
+      ctx.restore();
+    } else {
+      ctx.font = `${l.w} ${l.size * s}px "Courier New", monospace`;
+      ctx.save();
+      ctx.shadowBlur = l.size * s * 0.3;
+      tracked(l.t, cx, y, l.ls * s);
+      ctx.restore();
+    }
+    y += (l.size * s) + (l.gap * s);
+  });
+}
+
+document.getElementById('bWide').onclick = e => {
+  W = 1200; H = 630;
+  e.target.classList.add('on');
+  document.getElementById('bSquare').classList.remove('on');
+  render();
+};
+document.getElementById('bSquare').onclick = e => {
+  W = 1080; H = 1080;
+  e.target.classList.add('on');
+  document.getElementById('bWide').classList.remove('on');
+  render();
+};
+
+document.getElementById('dl').onclick = () => {
+  const name = (W === H) ? 'the-bloc-square.png' : 'the-bloc-og.png';
+  cv.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png');
+};
+
+document.fonts.ready.then(render);
+render();
+</script>
+</body>
+</html>
